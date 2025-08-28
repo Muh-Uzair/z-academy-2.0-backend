@@ -24,6 +24,13 @@ export const registerStudent = async (
       );
     }
 
+    // check if user already exists
+    const existingUser = await UserModel.findOne({ email });
+
+    if (existingUser) {
+      return next(new AppError("User already exists. Please login.", 400));
+    }
+
     // 3 : generate otp
     const otp = generateOTP();
 
@@ -119,7 +126,7 @@ export const verifyUserUsingOtp = async (
     // 12 : return response
     return res.status(200).json({
       status: "success",
-      message: "Supplier sign up success",
+      message: "Student register success",
       data: {
         user,
         jwt: token,
