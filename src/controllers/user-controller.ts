@@ -5,7 +5,11 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { generateOTP } from "../utils/generate-otp";
 import { sendMail } from "../utils/email";
-import { UserType } from "../types/user-types";
+import { IUser, UserType } from "../types/user-types";
+
+export interface RequestWithUser extends Request {
+  user?: IUser;
+}
 
 // This sends an otp
 export const registerStudent = async (
@@ -120,7 +124,7 @@ export const verifyUserUsingOtp = async (
     // 9 : sign token
     const token = jwt.sign({ id: String(user._id) }, jwtSecret, signOptions);
 
-    // 1 : once the user is created the otp document should be deleted
+    // 10 : once the user is created the otp document should be deleted
     await OtpModel.findByIdAndDelete(otpDoc?._id);
 
     // 12 : return response
@@ -133,6 +137,25 @@ export const verifyUserUsingOtp = async (
       },
     });
   } catch (err: unknown) {
+    return next(err);
+  }
+};
+
+// FUNCTION
+export const getCurrAuthUser = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    res.status(200).json({
+      status: "success",
+      message: "User fetched successfully",
+      data: {
+        user: req.user,
+      },
+    });
+  } catch (err) {
     return next(err);
   }
 };

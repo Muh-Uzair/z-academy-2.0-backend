@@ -12,6 +12,7 @@ import mongoSanitize from "mongo-sanitize";
 import userRouter from "./routes/user-routes";
 import { globalErrorHandler } from "./controllers/error-controller";
 import { clearOtpCron } from "./cron/clear-otp-cron";
+import passportJwt from "./middlewares/passport-jwt";
 
 dotenv.config({ path: "./config.env" });
 
@@ -78,6 +79,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // cron jobs
 clearOtpCron();
+
+// passport strategies
+app.use(passportJwt.initialize());
 
 // rotes
 app.get("/", (req: Request, res: Response) => {

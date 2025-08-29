@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { IUser, UserType } from "../types/user-types";
+import bcrypt from "bcrypt";
 
 const UserSchema: Schema<IUser> = new Schema(
   {
@@ -35,8 +36,26 @@ const UserSchema: Schema<IUser> = new Schema(
       },
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret) {
+        delete (ret as any).password;
+        delete (ret as any).__v;
+        return ret;
+      },
+    },
+  }
 );
+
+UserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+
+  next();
+});
 
 const UserModel: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
