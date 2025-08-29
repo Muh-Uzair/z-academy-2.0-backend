@@ -6,6 +6,7 @@ import { AppError } from "../utils/AppError";
 import { generateOTP } from "../utils/generate-otp";
 import { sendMail } from "../utils/email";
 import { IUser, UserType } from "../types/user-types";
+import bcrypt from "bcrypt";
 
 export interface RequestWithUser extends Request {
   user?: IUser;
@@ -94,13 +95,13 @@ export const verifyUserUsingOtp = async (
     // 4 : find the document against the concerned otp
     const otpDoc = await OtpModel.findOne({ otp });
 
-    // 6 : check if otp is expired or invalid
+    // 5 : check if otp is expired or invalid
     if (!otpDoc || otpDoc.expiresAt < new Date()) {
       await OtpModel.findByIdAndDelete(otpDoc?._id);
       throw new AppError("OTP invalid or expired", 400);
     }
 
-    // 7 : signup the client, create a document in user collection and send a jwt
+    // 6 : signup the client, create a document in user collection and send a jwt
     const { name, email, password } = otpDoc;
 
     let user = await UserModel.create({
@@ -112,7 +113,7 @@ export const verifyUserUsingOtp = async (
 
     user = user.toObject() as any;
 
-    // 8 : preparation for jwt
+    // 7 : preparation for jwt
     const jwtSecret: string = process.env.JWT_SECRET!;
     const jwtExpiresIn: number =
       Number(process.env.JWT_EXPIRES_IN) || 259200000;
@@ -121,19 +122,28 @@ export const verifyUserUsingOtp = async (
       expiresIn: jwtExpiresIn,
     };
 
-    // 9 : sign token
+    // 8 : sign token
     const token = jwt.sign({ id: String(user._id) }, jwtSecret, signOptions);
 
-    // 10 : once the user is created the otp document should be deleted
+    // 9 : once the user is created the otp document should be deleted
     await OtpModel.findByIdAndDelete(otpDoc?._id);
 
-    // 12 : return response
+    //  10 : set JWT in cookie
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+
+    // 11 : return response
     return res.status(200).json({
       status: "success",
       message: "Student register success",
       data: {
         user,
-        jwt: token,
+        jwt: token, // still sending in body too (optional)
       },
     });
   } catch (err: unknown) {
@@ -157,5 +167,90 @@ export const getCurrAuthUser = async (
     });
   } catch (err) {
     return next(err);
+  }
+};
+
+// FUNCTION
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1 : take email and password out
+    const { email, password } = req.body;
+
+    // 2 : check if something is missing
+    if (!email || !password) {
+      throw new AppError("Missing credentials email or password", 400);
+    }
+
+    // 3 : find user for that email
+    const user = await UserModel.findOne({ email }).select("+password");
+
+    // 4 : compare the password
+    const passwordCorrect = user?.password
+      ? await bcrypt.compare(password, user?.password)
+      : false;
+
+    // 5 : check both buildManager and passwords are correct or not
+    if (!user || !passwordCorrect) {
+      return next(new AppError("Wrong email or password", 401));
+    }
+
+    // 6 : sign a jwt, create a jwt
+    const jwtSecret: string = process.env.JWT_SECRET!;
+    const jwtExpiresIn: number =
+      Number(process.env.JWT_EXPIRES_IN) || 259200000;
+
+    const signOptions: SignOptions = {
+      expiresIn: jwtExpiresIn,
+    };
+
+    const token = jwt.sign(
+      { id: String(user._id) }, // always cast ObjectId to string
+      jwtSecret,
+      signOptions
+    );
+
+    // 7 : send the cookie
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "User login success",
+      data: {
+        user,
+        jwt: token,
+      },
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+// FUNCTION
+export const logoutUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 👇 replace "jwt" with your actual cookie name
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error: unknown) {
+    return next(error);
   }
 };

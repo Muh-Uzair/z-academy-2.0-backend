@@ -1,6 +1,8 @@
 import express, { RequestHandler, Router } from "express";
 import {
   getCurrAuthUser,
+  loginUser,
+  logoutUser,
   registerStudent,
   verifyUserUsingOtp,
 } from "../controllers/user-controller";
@@ -20,5 +22,7 @@ router.get(
   passportJwt.authenticate("jwt", { session: false }),
   getCurrAuthUser as RequestHandler
 );
+router.post("/login", loginUser);
+router.post("/logout", logoutUser);
 
 export default router;
