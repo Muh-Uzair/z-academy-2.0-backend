@@ -41,6 +41,20 @@ passport.use(
           }
         }
 
+        if (
+          stateArr[0] === "userType=student" ||
+          stateArr[0] === "userType=instructor"
+        ) {
+          const existingUser = await UserModel.findOne({
+            email: profile.emails?.[0]?.value,
+            googleId: profile.id,
+          });
+
+          if (existingUser) {
+            return done(null, undefined);
+          }
+        }
+
         // try by googleId first
         let user = await UserModel.findOne({ googleId: profile.id });
 

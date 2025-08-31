@@ -56,7 +56,7 @@ router.get(
   "/google/callback",
   passportGoogle.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/registration-error?registration-method=google-oauth`,
+    failureRedirect: `${process.env.CLIENT_URL}/google-auth-error`,
   }),
   googleRegisterCallback as any
 );
