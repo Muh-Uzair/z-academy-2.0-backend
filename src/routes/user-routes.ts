@@ -3,6 +3,7 @@ import {
   getCurrAuthUser,
   loginUser,
   logoutUser,
+  registerInstructor,
   registerStudent,
   verifyUserUsingOtp,
 } from "../controllers/user-controller";
@@ -15,6 +16,9 @@ const router: Router = express.Router();
 // student routes
 router.post("/student/register", registerStudent);
 router.post("/verify-otp", verifyUserUsingOtp);
+
+// instructor routes
+router.post("/instructor/register", registerInstructor);
 
 // common routes
 router.get(

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { IOtp } from "../types/otp-types";
+import { UserType } from "../types/user-types";
 
 const OtpSchema: Schema<IOtp> = new Schema(
   {
@@ -14,6 +15,17 @@ const OtpSchema: Schema<IOtp> = new Schema(
           value === null || /^[0-9]{6}$/.test(String(value)),
         message: "OTP must be a 6-digit number",
       },
+    },
+    // Instructor-only fields
+    institute: {
+      type: String,
+    },
+    specialization: {
+      type: String,
+    },
+    experience: {
+      type: Number,
+      min: 0,
     },
     expiresAt: {
       type: Date,

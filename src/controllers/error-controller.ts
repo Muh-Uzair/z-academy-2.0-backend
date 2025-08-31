@@ -3,6 +3,7 @@
 import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
 import { MongoServerError } from "mongodb";
+import { ZodError } from "zod";
 
 interface ErrorResponse {
   status: "error" | "fail";
@@ -45,6 +46,11 @@ export const globalErrorHandler = (
     return res.status(err.errCode).json(response);
   }
 
+  // Handle Zod Validation Errors
+  if (err instanceof ZodError) {
+    return handleZodError(err, res, isDevelopment);
+  }
+
   // Handle MongoDB errors
   if (err instanceof MongoServerError) {
     return handleMongoError(err, res, isDevelopment);
@@ -63,6 +69,11 @@ export const globalErrorHandler = (
   // Handle JWT Errors
   if (isJWTError(err)) {
     return handleJWTError(err, res, isDevelopment);
+  }
+
+  // Handle Multer Errors (File upload errors)
+  if (isMulterError(err)) {
+    return handleMulterError(err, res, isDevelopment);
   }
 
   // Handle Syntax Errors (JSON parsing, etc.)
@@ -108,6 +119,74 @@ export const globalErrorHandler = (
   }
 
   return res.status(500).json(response);
+};
+
+// Zod Error Handler
+const handleZodError = (
+  err: ZodError,
+  res: Response,
+  isDevelopment: boolean
+) => {
+  const errors = err.issues.map((error: any) => {
+    const path = error.path.join(".");
+
+    switch (error.code) {
+      case "invalid_type":
+        if (error.received === "undefined") {
+          return `${path} is required`;
+        }
+        return `${path} must be of type ${error.expected}, received ${error.received}`;
+
+      case "too_small":
+        if (error.type === "string") {
+          return `${path} must be at least ${error.minimum} characters long`;
+        }
+        if (error.type === "array") {
+          return `${path} must contain at least ${error.minimum} items`;
+        }
+        if (error.type === "number") {
+          return `${path} must be at least ${error.minimum}`;
+        }
+        return `${path} is too small`;
+
+      case "too_big":
+        if (error.type === "string") {
+          return `${path} must not exceed ${error.maximum} characters`;
+        }
+        if (error.type === "array") {
+          return `${path} must not contain more than ${error.maximum} items`;
+        }
+        if (error.type === "number") {
+          return `${path} must not exceed ${error.maximum}`;
+        }
+        return `${path} is too big`;
+
+      case "invalid_string":
+        return `${path} must be a valid ${error.validation}`;
+
+      case "invalid_enum_value":
+        return `${path} must be one of: ${error.options?.join(", ")}`;
+
+      case "invalid_literal":
+        return `${path} must be '${error.expected}'`;
+
+      case "custom":
+        return error.message;
+
+      default:
+        return error.message;
+    }
+  });
+
+  return res.status(400).json({
+    status: "fail",
+    message: "Validation failed",
+    details: errors,
+    ...(isDevelopment && {
+      fullError: err.issues,
+      stack: err.stack,
+    }),
+  });
 };
 
 // MongoDB Error Handler
@@ -277,5 +356,19 @@ const isJWTError = (err: unknown): err is { name: string; message: string } => {
     err !== null &&
     "name" in err &&
     (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError")
+  );
+};
+
+const isMulterError = (
+  err: unknown
+): err is { code: string; message: string } => {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    typeof (err as any).code === "string" &&
+    ["LIMIT_FILE_SIZE", "LIMIT_FILE_COUNT", "LIMIT_UNEXPECTED_FILE"].includes(
+      (err as any).code
+    )
   );
 };

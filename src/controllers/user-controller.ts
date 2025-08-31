@@ -7,6 +7,7 @@ import { generateOTP } from "../utils/generate-otp";
 import { sendMail } from "../utils/email";
 import { IUser, UserType } from "../types/user-types";
 import bcrypt from "bcrypt";
+import { registerInstructorSchema } from "../zod-schemas/users-zod-schema";
 
 export interface RequestWithUser extends Request {
   user?: IUser;
@@ -102,16 +103,34 @@ export const verifyUserUsingOtp = async (
     }
 
     // 6 : signup the client, create a document in user collection and send a jwt
-    const { name, email, password } = otpDoc;
+    let user = null;
+    if (userType === "student") {
+      const { name, email, password } = otpDoc;
 
-    let user = await UserModel.create({
-      name,
-      email,
-      password,
-      userType,
-    });
+      user = await UserModel.create({
+        name,
+        email,
+        password,
+        userType,
+      });
+    }
 
-    user = user.toObject() as any;
+    if (userType === "instructor") {
+      const { name, email, password, institute, specialization, experience } =
+        otpDoc;
+
+      user = await UserModel.create({
+        name,
+        email,
+        password,
+        userType,
+        institute,
+        specialization,
+        experience,
+      });
+    }
+
+    user = user?.toObject() as any;
 
     // 7 : preparation for jwt
     const jwtSecret: string = process.env.JWT_SECRET!;
@@ -250,6 +269,70 @@ export const logoutUser = async (
     });
 
     return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+// FUNCTION
+export const registerInstructor = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1 : validate request body
+    const parsedData = registerInstructorSchema.parse({
+      ...req.body,
+      experience: parseInt(req.body.experience),
+    });
+
+    // 2 : destructure fields after validation
+    const { name, email, password, institute, specialization, experience } =
+      parsedData;
+
+    // 3 : check if user already exists
+    const existingUser = await UserModel.findOne({ email });
+
+    if (existingUser) {
+      return next(new AppError("User already exists. Please login.", 400));
+    }
+
+    // 3 : generate otp
+    const otp = generateOTP();
+
+    // 4 : send otp to student email
+    const result = await sendMail(email, Number(otp));
+
+    // 5 : if email not send then show error
+    if (!result?.success) {
+      return next(
+        new AppError(
+          "There was an error sending email. Please try again later.",
+          500
+        )
+      );
+    }
+
+    // 6 : create a document in otp collection to store the information of user
+    const optDoc = await OtpModel.create({
+      name,
+      email,
+      password,
+      institute,
+      specialization,
+      experience,
+      otp: Number(otp),
+    });
+
+    if (!optDoc) {
+      throw new AppError("Unable to create otp", 500);
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Otp sent to instructor email",
+    });
   } catch (error: unknown) {
     return next(error);
   }
