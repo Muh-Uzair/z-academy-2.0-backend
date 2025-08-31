@@ -13,6 +13,7 @@ import userRouter from "./routes/user-routes";
 import { globalErrorHandler } from "./controllers/error-controller";
 import { clearOtpCron } from "./cron/clear-otp-cron";
 import passportJwt from "./middlewares/passport-jwt";
+import passportGoogle from "./middlewares/passport-google";
 
 dotenv.config({ path: "./config.env" });
 
@@ -33,7 +34,7 @@ app.use(hpp({}));
 // setting cors
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URLs,
     credentials: true,
   })
 );
@@ -84,6 +85,7 @@ clearOtpCron();
 
 // passport strategies
 app.use(passportJwt.initialize());
+app.use(passportGoogle.initialize());
 
 // rotes
 app.get("/", (req: Request, res: Response) => {

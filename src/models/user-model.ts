@@ -6,34 +6,37 @@ const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
+    password: { type: String },
     userType: {
       type: String,
       enum: Object.values(UserType),
       required: true,
     },
-    avatar: { type: String },
-    bio: { type: String },
+    bio: { type: String, default: "" },
 
     // Instructor-only fields
     institute: {
       type: String,
-      required: function () {
-        return this.userType === UserType.INSTRUCTOR;
-      },
+
+      default: "",
     },
     specialization: {
       type: String,
-      required: function () {
-        return this.userType === UserType.INSTRUCTOR;
-      },
+
+      default: "",
     },
     experience: {
       type: Number,
       min: 0,
-      required: function () {
-        return this.userType === UserType.INSTRUCTOR;
-      },
+
+      default: 0,
+    },
+
+    // google
+    avatar: { type: String, default: "" },
+    googleId: {
+      type: String,
+      default: "",
     },
   },
   {
@@ -49,6 +52,7 @@ const UserSchema: Schema<IUser> = new Schema(
 );
 
 UserSchema.pre("save", async function (next) {
+  if (!this.password) return next();
   if (!this.isModified("password")) return next();
 
   const salt = await bcrypt.genSalt(10);

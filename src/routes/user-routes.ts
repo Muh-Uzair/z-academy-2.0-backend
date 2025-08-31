@@ -6,8 +6,10 @@ import {
   registerInstructor,
   registerStudent,
   verifyUserUsingOtp,
+  sendJwtGoogle,
 } from "../controllers/user-controller";
 import passportJwt from "../middlewares/passport-jwt";
+import passportGoogle from "../middlewares/passport-google";
 
 const router: Router = express.Router();
 
@@ -28,5 +30,29 @@ router.get(
 );
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
+
+// google
+router.get("/google", (req, res, next) => {
+  // stash userType temporarily in the state param
+  const userType = req.query.userType as string;
+
+  const state =
+    userType === "student" ? `userType=student` : `userType=instructor`;
+
+  passportGoogle.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+    state,
+  })(req, res, next);
+});
+
+router.get(
+  "/google/callback",
+  passportGoogle.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth`,
+  }),
+  sendJwtGoogle as RequestHandler
+);
 
 export default router;

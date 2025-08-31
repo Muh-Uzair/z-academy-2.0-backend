@@ -8,9 +8,15 @@ import { sendMail } from "../utils/email";
 import { IUser, UserType } from "../types/user-types";
 import bcrypt from "bcrypt";
 import { registerInstructorSchema } from "../zod-schemas/users-zod-schema";
+import { Types } from "mongoose";
 
 export interface RequestWithUser extends Request {
   user?: IUser;
+}
+
+interface CustomRequest extends Request {
+  userType: string;
+  user: IUser & { _id: Types.ObjectId };
 }
 
 // This sends an otp
@@ -335,5 +341,41 @@ export const registerInstructor = async (
     });
   } catch (error: unknown) {
     return next(error);
+  }
+};
+
+// FUNCTION
+export const sendJwtGoogle = (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user;
+
+    // create your own JWT
+    // 8 : preparation for jwt
+    const jwtSecret: string = process.env.JWT_SECRET!;
+    const jwtExpiresIn: number =
+      Number(process.env.JWT_EXPIRES_IN) || 259200000;
+
+    const signOptions: SignOptions = {
+      expiresIn: jwtExpiresIn,
+    };
+
+    // 9 : sign token
+    const token = jwt.sign({ id: String(user._id) }, jwtSecret, signOptions);
+
+    // send the user to your frontend
+    return res.status(200).json({
+      status: "success",
+      message: "Registration successful",
+      data: {
+        user,
+        jwt: token,
+      },
+    });
+  } catch (err: unknown) {
+    return next(err);
   }
 };
