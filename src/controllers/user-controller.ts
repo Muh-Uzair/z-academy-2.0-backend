@@ -344,17 +344,12 @@ export const registerInstructor = async (
   }
 };
 
-// FUNCTION
-export const sendJwtGoogle = (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const googleRegisterCallback = (req: CustomRequest, res: Response) => {
   try {
+    // 1 : take the user from request
     const user = req.user;
 
-    // create your own JWT
-    // 8 : preparation for jwt
+    // 2: : sign a jwt, create a jwt
     const jwtSecret: string = process.env.JWT_SECRET!;
     const jwtExpiresIn: number =
       Number(process.env.JWT_EXPIRES_IN) || 259200000;
@@ -363,19 +358,28 @@ export const sendJwtGoogle = (
       expiresIn: jwtExpiresIn,
     };
 
-    // 9 : sign token
-    const token = jwt.sign({ id: String(user._id) }, jwtSecret, signOptions);
+    const token = jwt.sign(
+      { id: String(user._id) }, // always cast ObjectId to string
+      jwtSecret,
+      signOptions
+    );
 
-    // send the user to your frontend
-    return res.status(200).json({
-      status: "success",
-      message: "Registration successful",
-      data: {
-        user,
-        jwt: token,
-      },
+    // 3 : send the cookie
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
     });
-  } catch (err: unknown) {
-    return next(err);
+
+    // 4 : Redirect back to frontend with token + user info in query
+    return res.redirect(
+      `${process.env.CLIENT_URL}/google-auth-success?token=${token}&userType=${user?.userType}`
+    );
+  } catch (err) {
+    return res.redirect(
+      `${process.env.CLIENT_URL}/registration-error?registration-method=google-oauth`
+    );
   }
 };

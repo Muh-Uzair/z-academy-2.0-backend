@@ -6,7 +6,7 @@ import {
   registerInstructor,
   registerStudent,
   verifyUserUsingOtp,
-  sendJwtGoogle,
+  googleRegisterCallback,
 } from "../controllers/user-controller";
 import passportJwt from "../middlewares/passport-jwt";
 import passportGoogle from "../middlewares/passport-google";
@@ -52,7 +52,7 @@ router.get(
     session: false,
     failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth`,
   }),
-  sendJwtGoogle as RequestHandler
+  googleRegisterCallback as any
 );
 
 export default router;
