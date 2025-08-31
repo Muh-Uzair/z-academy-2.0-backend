@@ -345,41 +345,34 @@ export const registerInstructor = async (
 };
 
 export const googleRegisterCallback = (req: CustomRequest, res: Response) => {
-  try {
-    // 1 : take the user from request
-    const user = req.user;
+  // 1 : take the user from request
+  const user = req.user;
 
-    // 2: : sign a jwt, create a jwt
-    const jwtSecret: string = process.env.JWT_SECRET!;
-    const jwtExpiresIn: number =
-      Number(process.env.JWT_EXPIRES_IN) || 259200000;
+  // 2: : sign a jwt, create a jwt
+  const jwtSecret: string = process.env.JWT_SECRET!;
+  const jwtExpiresIn: number = Number(process.env.JWT_EXPIRES_IN) || 259200000;
 
-    const signOptions: SignOptions = {
-      expiresIn: jwtExpiresIn,
-    };
+  const signOptions: SignOptions = {
+    expiresIn: jwtExpiresIn,
+  };
 
-    const token = jwt.sign(
-      { id: String(user._id) }, // always cast ObjectId to string
-      jwtSecret,
-      signOptions
-    );
+  const token = jwt.sign(
+    { id: String(user._id) }, // always cast ObjectId to string
+    jwtSecret,
+    signOptions
+  );
 
-    // 3 : send the cookie
-    res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      path: "/",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
+  // 3 : send the cookie
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 3 * 24 * 60 * 60 * 1000,
+  });
 
-    // 4 : Redirect back to frontend with token + user info in query
-    return res.redirect(
-      `${process.env.CLIENT_URL}/google-auth-success?token=${token}&userType=${user?.userType}`
-    );
-  } catch (err) {
-    return res.redirect(
-      `${process.env.CLIENT_URL}/registration-error?registration-method=google-oauth`
-    );
-  }
+  // 4 : Redirect back to frontend with token + user info in query
+  return res.redirect(
+    `${process.env.CLIENT_URL}/google-auth-success?token=${token}&userType=${user?.userType}`
+  );
 };

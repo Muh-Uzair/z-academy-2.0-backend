@@ -35,9 +35,15 @@ router.post("/logout", logoutUser);
 router.get("/google", (req, res, next) => {
   // stash userType temporarily in the state param
   const userType = req.query.userType as string;
+  const login = req.query.login as string;
 
-  const state =
-    userType === "student" ? `userType=student` : `userType=instructor`;
+  let state;
+
+  if (login === "true") {
+    state = "login=true";
+  } else {
+    state = userType === "student" ? `userType=student` : `userType=instructor`;
+  }
 
   passportGoogle.authenticate("google", {
     scope: ["profile", "email"],
@@ -50,7 +56,7 @@ router.get(
   "/google/callback",
   passportGoogle.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth`,
+    failureRedirect: `${process.env.CLIENT_URL}/registration-error?registration-method=google-oauth`,
   }),
   googleRegisterCallback as any
 );

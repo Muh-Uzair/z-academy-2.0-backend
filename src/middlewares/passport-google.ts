@@ -30,6 +30,17 @@ passport.use(
         const state = req.query.state as string;
         const stateArr = state.split(",");
 
+        if (stateArr[0] === "login=true") {
+          const existingUser = await UserModel.findOne({
+            email: profile.emails?.[0]?.value,
+            googleId: profile.id,
+          });
+
+          if (!existingUser) {
+            return done(null, undefined);
+          }
+        }
+
         // try by googleId first
         let user = await UserModel.findOne({ googleId: profile.id });
 
