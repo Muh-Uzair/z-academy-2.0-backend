@@ -9,11 +9,12 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
 import mongoSanitize from "mongo-sanitize";
-import userRouter from "./routes/user-routes";
-import { globalErrorHandler } from "./controllers/error-controller";
-import { clearOtpCron } from "./cron/clear-otp-cron";
+import userRouter from "./routes/auth-routes";
+import coursesRouter from "./routes/course-routes";
 import passportJwt from "./middlewares/passport-jwt";
 import passportGoogle from "./middlewares/passport-google";
+import { globalErrorHandler } from "./controllers/error-controller";
+import { clearOtpCron } from "./cron/clear-otp-cron";
 
 dotenv.config({ path: "./config.env" });
 
@@ -96,6 +97,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/courses", coursesRouter);
 
 // Handle unknown routes (404)
 app.use((req: Request, res: Response) => {

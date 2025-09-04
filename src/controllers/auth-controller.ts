@@ -5,19 +5,15 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { generateOTP } from "../utils/generate-otp";
 import { sendMail } from "../utils/email";
-import { IUser, UserType } from "../types/user-types";
+import {
+  IUser,
+  RequestWithUser,
+  RequestWithUserAndUserType,
+  UserType,
+} from "../types/user-types";
 import bcrypt from "bcrypt";
 import { registerInstructorSchema } from "../zod-schemas/users-zod-schema";
 import { Types } from "mongoose";
-
-export interface RequestWithUser extends Request {
-  user?: IUser;
-}
-
-interface CustomRequest extends Request {
-  userType: string;
-  user: IUser & { _id: Types.ObjectId };
-}
 
 // This sends an otp
 export const registerStudent = async (
@@ -344,7 +340,10 @@ export const registerInstructor = async (
   }
 };
 
-export const googleRegisterCallback = (req: CustomRequest, res: Response) => {
+export const googleRegisterCallback = (
+  req: RequestWithUserAndUserType,
+  res: Response
+) => {
   // 1 : take the user from request
   const user = req.user;
 

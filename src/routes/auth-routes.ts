@@ -7,7 +7,7 @@ import {
   registerStudent,
   verifyUserUsingOtp,
   googleRegisterCallback,
-} from "../controllers/user-controller";
+} from "../controllers/auth-controller";
 import passportJwt from "../middlewares/passport-jwt";
 import passportGoogle from "../middlewares/passport-google";
 
