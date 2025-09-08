@@ -1,8 +1,12 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import { IResponseObject } from "../types/response-object";
-import { createCourseSchema } from "../zod-schemas/course-zod-schema";
+import {
+  createCourseSchema,
+  updateCourseSchema,
+} from "../zod-schemas/course-zod-schema";
 import { RequestWithUser } from "../types/user-types";
 import { CourseModel } from "../models/course-model";
+import mongoose from "mongoose";
 
 export const createCourse = async (
   req: RequestWithUser,
@@ -10,8 +14,6 @@ export const createCourse = async (
   next: NextFunction
 ) => {
   try {
-
-    console.log(req.body)
     // 1 : take necessary fields out
     const { title, description, level, price, thumbnail } = req.body;
 
@@ -36,6 +38,108 @@ export const createCourse = async (
 
     return res.status(200).json(responseObject);
   } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+export const getAllCoursesBasedOnInstructor = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const courses = await CourseModel.find({ instructorId: req.user?.id });
+
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Get all courses success",
+      data: {
+        courses,
+      },
+    };
+
+    res.status(200).json(responseObject);
+  } catch (error: unknown) {
+    next(error);
+  }
+};
+
+export const getCourseOnId: RequestHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        status: "fail", // match your IResponseObject type
+        message: "Course ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid course ID format",
+      });
+    }
+
+    const course = await CourseModel.findById(id);
+
+    if (!course) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Course not found",
+      });
+    }
+
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Course fetched successfully",
+      data: { course },
+    };
+
+    return res.status(200).json(responseObject);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateCourseOnId: RequestHandler = async (req, res, next) => {
+  try {
+    // title description level price thumbnail
+
+    // 1 : take necessary things
+    const { title, description, level, price, thumbnail } = req.body;
+
+    // 2 : pare it
+
+    const parsed = updateCourseSchema.parse({
+      title,
+      description,
+      level,
+      price: Number(price),
+      thumbnail,
+    });
+
+    const updatedCourse = await CourseModel.findByIdAndUpdate(
+      req.params.id,
+      parsed,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    // : send response
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Course updated successfully",
+      data: {
+        updatedCourse,
+      },
+    };
+
+    return res.status(200).json(responseObject);
+  } catch (error) {
     return next(error);
   }
 };

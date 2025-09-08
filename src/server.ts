@@ -18,7 +18,7 @@ import app from "./app";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-dotenv.config({ path: "./config.env" });
+dotenv.config({ path: "./config.env", quiet: true });
 
 mongoose
   .connect(process.env.DB_CONNECTION_STRING as string, {})

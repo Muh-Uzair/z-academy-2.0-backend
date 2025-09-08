@@ -16,7 +16,7 @@ import passportGoogle from "./middlewares/passport-google";
 import { globalErrorHandler } from "./controllers/error-controller";
 import { clearOtpCron } from "./cron/clear-otp-cron";
 
-dotenv.config({ path: "./config.env" });
+dotenv.config({ path: "./config.env", quiet: true });
 
 const app = express();
 

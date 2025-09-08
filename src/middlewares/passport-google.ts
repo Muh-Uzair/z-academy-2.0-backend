@@ -8,7 +8,7 @@ import { Request } from "express";
 import UserModel from "../models/user-model";
 import dotenv from "dotenv";
 
-dotenv.config({ path: "./config.env" });
+dotenv.config({ path: "./config.env", quiet: true });
 
 passport.use(
   new GoogleStrategy(

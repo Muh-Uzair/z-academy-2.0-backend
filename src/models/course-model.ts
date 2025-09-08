@@ -14,13 +14,6 @@ const courseSchema = new Schema<ICourse>(
     },
 
     instructorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    enrolledStudentsIds: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        default: [],
-      },
-    ],
 
     price: { type: Number, default: 0 },
     enrollmentCount: { type: Number, default: 0 },

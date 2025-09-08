@@ -6,7 +6,6 @@ export interface ICourse extends Document {
   level: "beginner" | "intermediate" | "advanced";
 
   instructorId: Types.ObjectId;
-  enrolledStudentsIds: Types.ObjectId[];
 
   price: number;
   enrollmentCount: number;

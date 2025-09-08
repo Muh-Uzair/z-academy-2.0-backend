@@ -5,7 +5,7 @@ import User from "../models/user-model";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve(__dirname, "../../config.env") });
+dotenv.config({ path: "./config.env", quiet: true });
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
