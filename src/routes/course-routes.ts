@@ -4,6 +4,7 @@ import {
   getAllCoursesBasedOnInstructor,
   getCourseOnId,
   updateCourseOnId,
+  getAllCourses,
 } from "../controllers/course-controller";
 import { restrictedTo } from "../middlewares/restricted-to";
 
@@ -30,5 +31,7 @@ router.patch(
   restrictedTo(["instructor"]) as unknown as RequestHandler,
   updateCourseOnId
 );
+
+router.get("/", getAllCourses);
 
 export default router;

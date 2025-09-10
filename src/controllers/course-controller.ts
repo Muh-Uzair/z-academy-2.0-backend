@@ -82,7 +82,10 @@ export const getCourseOnId: RequestHandler = async (req, res, next) => {
       });
     }
 
-    const course = await CourseModel.findById(id);
+    const course = await CourseModel.findById(id).populate(
+      "instructorId",
+      "name email bio institute specialization experience avatar"
+    );
 
     if (!course) {
       return res.status(404).json({
@@ -135,6 +138,31 @@ export const updateCourseOnId: RequestHandler = async (req, res, next) => {
       message: "Course updated successfully",
       data: {
         updatedCourse,
+      },
+    };
+
+    return res.status(200).json(responseObject);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getAllCourses = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const courses = await CourseModel.find().populate(
+      "instructorId",
+      "name email bio institute specialization experience avatar"
+    );
+
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Course fetched successfully",
+      data: {
+        courses,
       },
     };
 
