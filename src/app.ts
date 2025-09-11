@@ -11,6 +11,7 @@ import hpp from "hpp";
 import mongoSanitize from "mongo-sanitize";
 import userRouter from "./routes/auth-routes";
 import coursesRouter from "./routes/course-routes";
+import enrollmentsRouter from "./routes/enrollments-routes";
 import passportJwt from "./middlewares/passport-jwt";
 import passportGoogle from "./middlewares/passport-google";
 import { globalErrorHandler } from "./controllers/error-controller";
@@ -98,6 +99,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/courses", coursesRouter);
+app.use("/api/v1/enrollments", enrollmentsRouter);
 
 // Handle unknown routes (404)
 app.use((req: Request, res: Response) => {

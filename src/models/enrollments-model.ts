@@ -1,5 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
-import { IEnrollment } from "../types/enrollment-types";
+import { IEnrollment } from "../types/enrollments-types";
 
 const enrollmentSchema = new Schema<IEnrollment>(
   {

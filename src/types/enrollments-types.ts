@@ -6,6 +6,4 @@ export interface IEnrollment extends Document {
   status: "enrolled" | "completed" | "dropped";
   enrolledAt: Date;
   completedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
 }
