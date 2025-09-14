@@ -1,8 +1,10 @@
+import UserModel from "../models/user-model";
 import { NextFunction, Response } from "express";
 import { RequestWithUser } from "../types/user-types";
 import { CourseModel } from "../models/course-model";
 import { EnrollmentModel } from "../models/enrollments-model";
-import UserModel from "../models/user-model";
+import { updateInstructorProfileSchema } from "../zod-schemas/users-zod-schema";
+import { AppError } from "../utils/AppError";
 
 const getStudentsOnInstructorId = async (
   req: RequestWithUser,
@@ -123,4 +125,58 @@ const getInstructorProfile = async (
   }
 };
 
-export { getStudentsOnInstructorId, getInstructorProfile };
+const updateInstructorProfile = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1 : get instructor id
+    const instructorId = req.user?._id;
+    if (!instructorId) {
+      throw new AppError("Unauthorized: Instructor ID not found in token", 401);
+    }
+
+    // 2 : take necessary items out
+    const { name, bio, institute, specialization, experience } = req.body;
+
+    // 3 : parse the data on zod
+    let parsedData;
+    try {
+      parsedData = updateInstructorProfileSchema.parse({
+        name,
+        bio,
+        institute,
+        specialization,
+        experience: Number(experience),
+      });
+    } catch (err: any) {
+      return next(err);
+    }
+
+    // 4 : update the profile
+    const updatedProfile = await UserModel.findByIdAndUpdate(
+      instructorId,
+      parsedData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProfile) {
+      throw new AppError("Instructor not found", 404);
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Instructor profile updated successfully",
+      data: { updatedProfile },
+    });
+  } catch (err: unknown) {
+    return next(err);
+  }
+};
+
+export {
+  getStudentsOnInstructorId,
+  getInstructorProfile,
+  updateInstructorProfile,
+};

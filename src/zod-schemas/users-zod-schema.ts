@@ -20,3 +20,27 @@ export const registerInstructorSchema = z.object({
     .number({ error: "Experience must be a number" })
     .min(0, "Experience cannot be negative"),
 });
+
+export const updateInstructorProfileSchema = z.object({
+  name: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters." })
+    .max(50, { message: "Name must be under 50 characters." }),
+
+  bio: z
+    .string()
+    .max(200, { message: "Bio must be under 200 characters." })
+    .optional(),
+
+  institute: z
+    .string()
+    .min(2, { message: "Institute must be at least 2 characters." })
+    .max(100, { message: "Institute name too long." }),
+
+  specialization: z
+    .string()
+    .min(2, { message: "Specialization must be at least 2 characters." })
+    .max(100, { message: "Specialization name too long." }),
+
+  experience: z.number(),
+});

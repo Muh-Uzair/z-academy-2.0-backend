@@ -2,6 +2,7 @@ import express, { RequestHandler, Router } from "express";
 import {
   getInstructorProfile,
   getStudentsOnInstructorId,
+  updateInstructorProfile,
 } from "../controllers/user-controller";
 import { restrictedTo } from "../middlewares/restricted-to";
 import { UserType } from "../types/user-types";
@@ -20,6 +21,12 @@ router.get(
   "/instructor/profile",
   restrictedTo([UserType.INSTRUCTOR]) as unknown as RequestHandler,
   getInstructorProfile as RequestHandler
+);
+
+router.patch(
+  "/instructor/profile",
+  restrictedTo([UserType.INSTRUCTOR]) as unknown as RequestHandler,
+  updateInstructorProfile as RequestHandler
 );
 
 export default router;
