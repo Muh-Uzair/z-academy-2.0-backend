@@ -5,6 +5,7 @@ import { EnrollmentModel } from "../models/enrollments-model";
 import UserModel from "../models/user-model";
 import { RequestWithUser, UserType } from "../types/user-types";
 import { CourseModel } from "../models/course-model";
+import { AppError } from "../utils/AppError";
 
 const createEnrollment = async (
   req: RequestWithUser,
@@ -12,8 +13,6 @@ const createEnrollment = async (
   next: NextFunction
 ) => {
   try {
-    console.log(req.body.courseId);
-    console.log(req.user?._id);
     //  Validate request body
     const parsedData = enrollmentSchema.parse({
       courseId: req.body.courseId,
@@ -69,4 +68,64 @@ const createEnrollment = async (
   }
 };
 
-export { createEnrollment };
+const getAllEnrollmentsForStudent = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const studentId = req.user?._id;
+
+    if (!studentId) {
+      throw new AppError("User id missing", 400);
+    }
+
+    const enrollments = await EnrollmentModel.find({ studentId })
+      .populate("studentId")
+      .populate("courseId");
+
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Enrollments for student fetched successfully",
+      data: {
+        enrollments,
+      },
+    };
+
+    return res.status(201).json(responseObject);
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+const getEnrollmentOnId = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const courseId = req.body;
+
+    if (!courseId) {
+      throw new AppError("Course id missing", 400);
+    }
+
+    const enrollment = await EnrollmentModel.findOne({ courseId })
+      .populate("studentId")
+      .populate("courseId");
+
+    const responseObject: IResponseObject = {
+      status: "success",
+      message: "Enrollment on course id fetched successfully",
+      data: {
+        enrollment,
+      },
+    };
+
+    return res.status(201).json(responseObject);
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+export { createEnrollment, getAllEnrollmentsForStudent, getEnrollmentOnId };

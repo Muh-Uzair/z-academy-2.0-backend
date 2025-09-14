@@ -1,7 +1,10 @@
 import express, { RequestHandler, Router } from "express";
 import { restrictedTo } from "../middlewares/restricted-to";
 import { UserType } from "../types/user-types";
-import { createEnrollment } from "../controllers/enrollments-controller";
+import {
+  createEnrollment,
+  getAllEnrollmentsForStudent,
+} from "../controllers/enrollments-controller";
 
 const router: Router = express.Router();
 
@@ -11,6 +14,12 @@ router.post(
   "/",
   restrictedTo([`${UserType.STUDENT}`]) as unknown as RequestHandler,
   createEnrollment as RequestHandler
+);
+
+router.get(
+  "/student",
+  restrictedTo([`${UserType.STUDENT}`]) as unknown as RequestHandler,
+  getAllEnrollmentsForStudent as RequestHandler
 );
 
 export default router;

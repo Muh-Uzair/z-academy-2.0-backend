@@ -9,7 +9,8 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
 import mongoSanitize from "mongo-sanitize";
-import userRouter from "./routes/auth-routes";
+import authRouter from "./routes/auth-routes";
+import userRouter from "./routes/user-routes";
 import coursesRouter from "./routes/course-routes";
 import enrollmentsRouter from "./routes/enrollments-routes";
 import passportJwt from "./middlewares/passport-jwt";
@@ -97,6 +98,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/courses", coursesRouter);
 app.use("/api/v1/enrollments", enrollmentsRouter);
