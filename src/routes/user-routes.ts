@@ -3,6 +3,8 @@ import {
   getInstructorProfile,
   getStudentsOnInstructorId,
   updateInstructorProfile,
+  getStudentProfile,
+  updateStudentProfile,
 } from "../controllers/user-controller";
 import { restrictedTo } from "../middlewares/restricted-to";
 import { UserType } from "../types/user-types";
@@ -27,6 +29,18 @@ router.patch(
   "/instructor/profile",
   restrictedTo([UserType.INSTRUCTOR]) as unknown as RequestHandler,
   updateInstructorProfile as RequestHandler
+);
+
+router.get(
+  "/student/profile",
+  restrictedTo([UserType.STUDENT]) as unknown as RequestHandler,
+  getStudentProfile as RequestHandler
+);
+
+router.patch(
+  "/student/profile",
+  restrictedTo([UserType.STUDENT]) as unknown as RequestHandler,
+  updateStudentProfile as RequestHandler
 );
 
 export default router;

@@ -3,7 +3,10 @@ import { NextFunction, Response } from "express";
 import { RequestWithUser } from "../types/user-types";
 import { CourseModel } from "../models/course-model";
 import { EnrollmentModel } from "../models/enrollments-model";
-import { updateInstructorProfileSchema } from "../zod-schemas/users-zod-schema";
+import {
+  updateInstructorProfileSchema,
+  updateStudentProfileSchema,
+} from "../zod-schemas/users-zod-schema";
 import { AppError } from "../utils/AppError";
 
 const getStudentsOnInstructorId = async (
@@ -175,8 +178,104 @@ const updateInstructorProfile = async (
   }
 };
 
+const getStudentProfile = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1: Check if user id exists
+    const studentId = req.user?._id;
+    if (!studentId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Unauthorized: No user id found in request",
+      });
+    }
+
+    // 2: Fetch instructor
+    const studentProfile = await UserModel.findById(studentId);
+
+    // 3: Handle not found
+    if (!studentProfile) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Instructor not found",
+      });
+    }
+
+    // 4: Ensure correct userType
+    if (studentProfile.userType !== "student") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Access denied: User is not a student",
+      });
+    }
+
+    //  5: Success response
+    return res.status(200).json({
+      status: "success",
+      message: "Instructor profile fetched successfully",
+      data: {
+        studentProfile,
+      },
+    });
+  } catch (err: unknown) {
+    return next(err);
+  }
+};
+
+const updateStudentProfile = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1 : get instructor id
+    const studentId = req.user?._id;
+    if (!studentId) {
+      throw new AppError("Unauthorized: Student ID not found in token", 401);
+    }
+
+    // 2 : take necessary items out
+    const { name, bio } = req.body;
+
+    // 3 : parse the data on zod
+    let parsedData;
+    try {
+      parsedData = updateStudentProfileSchema.parse({
+        name,
+        bio,
+      });
+    } catch (err: any) {
+      return next(err);
+    }
+
+    // 4 : update the profile
+    const updatedProfile = await UserModel.findByIdAndUpdate(
+      studentId,
+      parsedData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProfile) {
+      throw new AppError("Student not found", 404);
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Student profile updated successfully",
+      data: { updatedProfile },
+    });
+  } catch (err: unknown) {
+    return next(err);
+  }
+};
+
 export {
   getStudentsOnInstructorId,
   getInstructorProfile,
   updateInstructorProfile,
+  getStudentProfile,
+  updateStudentProfile,
 };

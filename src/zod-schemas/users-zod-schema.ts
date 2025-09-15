@@ -44,3 +44,15 @@ export const updateInstructorProfileSchema = z.object({
 
   experience: z.number(),
 });
+
+export const updateStudentProfileSchema = z.object({
+  name: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters." })
+    .max(50, { message: "Name must be under 50 characters." }),
+
+  bio: z
+    .string()
+    .max(200, { message: "Bio must be under 200 characters." })
+    .optional(),
+});
