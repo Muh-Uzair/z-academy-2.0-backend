@@ -17,7 +17,6 @@ import passportJwt from "./middlewares/passport-jwt";
 import passportGoogle from "./middlewares/passport-google";
 import { globalErrorHandler } from "./controllers/error-controller";
 import { clearOtpCron } from "./cron/clear-otp-cron";
-import { connectDB } from "./server";
 
 dotenv.config({ path: "./config.env", quiet: true });
 
@@ -90,18 +89,6 @@ clearOtpCron();
 // passport strategies
 app.use(passportJwt.initialize());
 app.use(passportGoogle.initialize());
-
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    console.error("Database connection failed:", error);
-    res
-      .status(503)
-      .json({ error: "Service unavailable - database connection failed" });
-  }
-});
 
 // rotes
 app.get("/", (req: Request, res: Response) => {

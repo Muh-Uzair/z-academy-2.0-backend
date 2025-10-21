@@ -1,66 +1,16 @@
-// /* eslint-disable */
-
-// // Handle uncaught exception
-// process.on("uncaughtException", (err: unknown) => {
-//   console.log("Uncaught exception");
-
-//   if (err instanceof Error) {
-//     console.log(err);
-//     console.log(err.name, err.message);
-//   } else {
-//     console.log(err);
-//   }
-
-//   process.exit(1);
-// });
-
-// import app from "./app";
-// import dotenv from "dotenv";
-// import mongoose from "mongoose";
-
-// dotenv.config({ path: "./config.env", quiet: true });
-
-// mongoose
-//   .connect(process.env.DB_CONNECTION_STRING as string, {})
-//   .then(() => {
-//     console.log("Database connection successful");
-//   })
-//   .catch((err) => {
-//     console.error("Database connection error:", err);
-//   });
-
-// if (require.main === module) {
-//   const port = Number(process.env.PORT || 4000);
-//   const server = app.listen(port, () => {
-//     console.log(`Server is listening on port ${port}`);
-//   });
-
-//   // Handle unhandled rejections
-//   process.on("unhandledRejection", (err: unknown) => {
-//     console.log("Unhandled error rejections");
-
-//     if (err instanceof Error) {
-//       console.log(err);
-//       console.log(err.name, err.message);
-//     } else {
-//       console.log(err);
-//     }
-
-//     server.close(() => {
-//       process.exit(1);
-//     });
-//   });
-// }
-
-// // Export app for Vercel or testing
-// export default app;
-
 /* eslint-disable */
+
+// Handle uncaught exception
 process.on("uncaughtException", (err: unknown) => {
   console.log("Uncaught exception");
+
   if (err instanceof Error) {
+    console.log(err);
     console.log(err.name, err.message);
+  } else {
+    console.log(err);
   }
+
   process.exit(1);
 });
 
@@ -68,52 +18,44 @@ import app from "./app";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-dotenv.config({ path: "./config.env", quiet: true });
+dotenv.config({ path: "./config.env" });
 
-// Cache the connection promise
-let dbConnection: Promise<typeof mongoose> | null = null;
+const dbConnectionString = process.env.DB_CONNECTION_STRING?.replace(
+  "<db_password>",
+  encodeURIComponent(process.env.DB_PASSWORD || "")
+);
 
-const connectDB = async () => {
-  if (dbConnection) {
-    return dbConnection;
-  }
-
-  dbConnection = mongoose.connect(process.env.DB_CONNECTION_STRING as string, {
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-  });
-
-  try {
-    await dbConnection;
+mongoose
+  .connect(dbConnectionString as string, {})
+  .then(() => {
     console.log("Database connection successful");
-  } catch (err) {
-    dbConnection = null; // Reset on error
+  })
+  .catch((err) => {
     console.error("Database connection error:", err);
-    throw err;
-  }
-
-  return dbConnection;
-};
-
-// For Vercel: ensure DB is connected before handling requests
-connectDB();
+  });
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 4000);
-  const server = app.listen(port, () => {
+  const server = app.listen(port, "localhost", () => {
     console.log(`Server is listening on port ${port}`);
   });
 
+  // Handle unhandled rejections
   process.on("unhandledRejection", (err: unknown) => {
     console.log("Unhandled error rejections");
+
     if (err instanceof Error) {
+      console.log(err);
       console.log(err.name, err.message);
+    } else {
+      console.log(err);
     }
+
     server.close(() => {
       process.exit(1);
     });
   });
 }
 
+// Export app for Vercel or testing
 export default app;
-export { connectDB };
