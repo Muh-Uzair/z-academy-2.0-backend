@@ -16,7 +16,6 @@ import enrollmentsRouter from "./routes/enrollments-routes";
 import passportJwt from "./middlewares/passport-jwt";
 import passportGoogle from "./middlewares/passport-google";
 import { globalErrorHandler } from "./controllers/error-controller";
-import { clearOtpCron } from "./cron/clear-otp-cron";
 
 dotenv.config({ path: "./config.env", quiet: true });
 
@@ -84,7 +83,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // cron jobs
-clearOtpCron();
 
 // passport strategies
 app.use(passportJwt.initialize());

@@ -17,6 +17,7 @@ process.on("uncaughtException", (err: unknown) => {
 import app from "./app";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { clearOtpCron } from "./cron/clear-otp-cron";
 
 dotenv.config({ path: "./config.env" });
 
@@ -25,19 +26,31 @@ const dbConnectionString = process.env.DB_CONNECTION_STRING?.replace(
   encodeURIComponent(process.env.DB_PASSWORD || "")
 );
 
-mongoose
-  .connect(dbConnectionString as string, {
-    bufferCommands: false,
-  })
-  .then(() => {
-    console.log("Database connection successful");
-  })
-  .catch((err) => {
-    console.error("Database connection error:", err);
-  });
+// mongoose
+//   .connect(dbConnectionString as string, {
+//     bufferCommands: false,
+//   })
+//   .then(() => {
+//     console.log("Database connection successful");
+//   })
+//   .catch((err) => {
+//     console.error("Database connection error:", err);
+//   });
 if (require.main === module) {
   const port = Number(process.env.PORT || 4000);
   const server = app.listen(port, "localhost", () => {
+    mongoose
+      .connect(dbConnectionString as string, {
+        bufferCommands: false,
+      })
+      .then(() => {
+        clearOtpCron();
+        console.log("Database connection successful");
+      })
+      .catch((err) => {
+        console.error("Database connection error:", err);
+      });
+
     console.log(`Server is listening on port ${port}`);
   });
 
