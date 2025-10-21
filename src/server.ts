@@ -26,14 +26,15 @@ const dbConnectionString = process.env.DB_CONNECTION_STRING?.replace(
 );
 
 mongoose
-  .connect(dbConnectionString as string, {})
+  .connect(dbConnectionString as string, {
+    bufferCommands: false,
+  })
   .then(() => {
     console.log("Database connection successful");
   })
   .catch((err) => {
     console.error("Database connection error:", err);
   });
-
 if (require.main === module) {
   const port = Number(process.env.PORT || 4000);
   const server = app.listen(port, "localhost", () => {
