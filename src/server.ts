@@ -21,36 +21,24 @@ import { clearOtpCron } from "./cron/clear-otp-cron";
 
 dotenv.config({ path: "./config.env" });
 
-const dbConnectionString = process.env.DB_CONNECTION_STRING?.replace(
-  "<db_password>",
-  encodeURIComponent(process.env.DB_PASSWORD || "")
-);
+const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
-// mongoose
-//   .connect(dbConnectionString as string, {
-//     bufferCommands: false,
-//   })
-//   .then(() => {
-//     console.log("Database connection successful");
-//   })
-//   .catch((err) => {
-//     console.error("Database connection error:", err);
-//   });
+console.log(dbConnectionString, "-----------------------------------------");
+
+mongoose
+  .connect(dbConnectionString as string, {
+    bufferCommands: false,
+  })
+  .then(() => {
+    console.log("Database connection successful");
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err);
+  });
+
 if (require.main === module) {
   const port = Number(process.env.PORT || 4000);
   const server = app.listen(port, "localhost", () => {
-    mongoose
-      .connect(dbConnectionString as string, {
-        bufferCommands: false,
-      })
-      .then(() => {
-        clearOtpCron();
-        console.log("Database connection successful");
-      })
-      .catch((err) => {
-        console.error("Database connection error:", err);
-      });
-
     console.log(`Server is listening on port ${port}`);
   });
 
