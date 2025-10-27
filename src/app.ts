@@ -93,12 +93,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     })
     .then(() => {
       console.log("Database connection successful");
+      next();
     })
     .catch((err) => {
       console.error("Database connection error:", err);
-    })
-    .finally(() => {
-      next();
+      next(err);
     });
 });
 
