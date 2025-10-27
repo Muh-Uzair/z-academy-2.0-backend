@@ -16,6 +16,7 @@ import enrollmentsRouter from "./routes/enrollments-routes";
 import passportJwt from "./middlewares/passport-jwt";
 import passportGoogle from "./middlewares/passport-google";
 import { globalErrorHandler } from "./controllers/error-controller";
+import mongoose from "mongoose";
 
 dotenv.config({ path: "./config.env", quiet: true });
 
@@ -42,11 +43,6 @@ app.use(
 );
 
 app.use(cookieParser());
-
-// logger in dev mode
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
 
 app.set("trust proxy", true);
 
@@ -82,7 +78,29 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// cron jobs
+// logger in dev mode
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// mongodb connection
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const dbConnectionString = process.env.DB_CONNECTION_STRING;
+
+  mongoose
+    .connect(dbConnectionString as string, {
+      bufferCommands: false,
+    })
+    .then(() => {
+      console.log("Database connection successful");
+    })
+    .catch((err) => {
+      console.error("Database connection error:", err);
+    })
+    .finally(() => {
+      next();
+    });
+});
 
 // passport strategies
 app.use(passportJwt.initialize());
